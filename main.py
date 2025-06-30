@@ -6,13 +6,16 @@ import os
 
 app = Flask(__name__)
 
-# Enlace a tu hoja de Google Sheets publicada como CSV
-URL_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTLBQlz_iuj-A4om_MV6seXSbd6ZAJAMsBPzxwKDUyxvSFCNA0HvA6EiaXv098B51ws6GJYOzsAZ5u/pub?output=csv"
+# Enlace a tu hoja de Google Sheets (publicada como CSV)
+URL_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTLBQlz_iuj-A4om_MV6seXSbd6ZAJAMsBPzxwKDUyxvSFCNA0HvA6EiaXv098B51ws6GJYOzsAZ5u/pub?gid=0&single=true&output=csv"
 
 # Tiempo límite por sesión (en minutos)
 TIEMPO_EXPIRACION = timedelta(minutes=4)
 
-# Cargar usuarios desde la hoja (ignorando encabezado)
+# Sesiones activas en memoria
+sesiones = {}
+
+# Cargar usuarios desde la hoja (dinámicamente)
 def cargar_usuarios():
     usuarios = {}
     try:
@@ -25,16 +28,14 @@ def cargar_usuarios():
             if len(row) >= 2:
                 user_id = row[0].strip()
                 clave = row[1].strip()
-                usuarios[user_id] = {"clave": clave, "ultima_sesion": None}
+                usuarios[user_id] = clave
     except Exception as e:
         print("Error al cargar la hoja:", e)
     return usuarios
 
-# Usuarios cargados desde la hoja
-usuarios = cargar_usuarios()
-
 @app.route("/login", methods=["POST"])
 def login():
+    usuarios = cargar_usuarios()
     data = request.json
     user_id = data.get("id")
     clave = data.get("clave")
@@ -43,19 +44,17 @@ def login():
     if user_id not in usuarios:
         return jsonify({"autorizado": False, "reason": "ID no autorizado"})
 
-    usuario = usuarios[user_id]
-
-    if clave != usuario["clave"]:
+    if clave != usuarios[user_id]:
         return jsonify({"autorizado": False, "reason": "Clave incorrecta"})
 
-    ultima = usuario["ultima_sesion"]
+    ultima = sesiones.get(user_id)
     if ultima and ahora - ultima < TIEMPO_EXPIRACION:
         return jsonify({
             "autorizado": False,
             "reason": "Ya hay una sesión activa para este usuario"
         })
 
-    usuario["ultima_sesion"] = ahora
+    sesiones[user_id] = ahora
     return jsonify({"autorizado": True})
 
 @app.route("/")
