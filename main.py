@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # Enlace a tu hoja de Google Sheets publicada como CSV
-URL_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTLBQlz_iuj-A4om_MV6seXSbd6ZAJAMsBPzxwKDUyxvSFCNA0HvA6EiaXv098B51ws6GJYOzsAZ5u/pub?gid=0&single=true&output=csv"
+URL_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTLBQlz_iuj-A4om_MV6seXSbd6ZAJAMsBPzxwKDUyxvSFCNA0HvA6EiaXv098B51ws6GJYOzsAZ5u/pub?output=csv"
 
 # Tiempo límite por sesión (en minutos)
 TIEMPO_EXPIRACION = timedelta(minutes=10)
